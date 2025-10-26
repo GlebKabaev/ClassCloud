@@ -1,15 +1,19 @@
 package ru.kubsu.main.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
 
 @RestController
 @RequestMapping("/main")
 public class MainController {
 
+    @PostMapping("/trainee")
+    public ResponseEntity<?> post(@RequestPart MultipartFile file) {
+
+        return  ResponseEntity.ok().build();
+    }
 
 }
