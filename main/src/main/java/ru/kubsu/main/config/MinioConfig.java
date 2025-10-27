@@ -6,13 +6,15 @@ import io.minio.BucketExistsArgs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
+@Slf4j
 public class MinioConfig {
-    private String endpoint;
-    private String accessKey;
-    private String secretKey;
-    private String bucketName;
+    private final String endpoint;
+    private final String accessKey;
+    private final String secretKey;
+    private final String bucketName;
 
     public MinioConfig(@Value("${minio.endpoint}") String endpoint,
                        @Value("${minio.access-key}") String accessKey,
@@ -43,9 +45,9 @@ public class MinioConfig {
         boolean found = client.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         if (!found) {
             client.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            System.out.println("✅ Создан бакет: " + bucketName);
+            log.info("✅ Создан бакет: {}", bucketName);
         } else {
-            System.out.println("ℹ️ Бакет уже существует: " + bucketName);
+            log.info("ℹ️ Бакет уже существует: {}", bucketName);
         }
     }
 }

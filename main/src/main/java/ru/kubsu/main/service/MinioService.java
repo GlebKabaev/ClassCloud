@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.kubsu.main.config.MinioConfig;
+import ru.kubsu.main.exception.MinIOException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +59,7 @@ public class MinioService {
     }
 
     // Проверка существования объекта
-    public boolean objectExists(String objectName) throws Exception {
+    public boolean objectExists(String objectName) {
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
@@ -69,9 +70,12 @@ public class MinioService {
             return true;
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
-                return false;
+                return false; // объект не существует
             }
-            throw e;
+            throw new MinIOException("Ошибка при обращении к MinIO",e);
+        } catch (Exception e) {
+            throw new MinIOException("Ошибка при обращении к MinIO", e);
+
         }
     }
 }

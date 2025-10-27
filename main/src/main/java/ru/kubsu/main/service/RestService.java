@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
-public class RestClientService {
+public class RestService {
     private final RestClient client = RestClient.create();
     public  <T, R> R post(
             String uri,

@@ -6,3 +6,5 @@ minio:
   access-key: "minioadmin"
   bucket-name: "bucket"
   endpoint: "http://localhost:9000"
+voxelizator:
+  endpoint: "http://localhost:5454"
