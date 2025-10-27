@@ -13,3 +13,4 @@
 
    Можно добавлять предложения/исправления/идеи   
     
+Макет в фигме : https://www.figma.com/proto/sepDiSCp1AEjajTfRDghE1/Untitled?node-id=0-1&t=ZOELVoH6rCyZAISg-1
