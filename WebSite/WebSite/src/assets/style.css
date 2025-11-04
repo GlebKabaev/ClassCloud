@@ -1,0 +1,33 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+.wrapper{
+    width: 100%;
+    max-width: 1340px;
+    margin: auto;
+}
+.header-block{
+    padding: 20px 0;
+}
+h1{
+    text-align: center;
+}
+.main-block{
+    padding: 40px 0;
+}
+footer{
+    background-color: #333;
+    color: #FFF;
+}
+.footer-box{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 40px 0;
+}
+.footer-block{
+    max-width: calc(100% / 3);
+    width: 100%;
+}
+
