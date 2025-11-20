@@ -126,6 +126,12 @@ a.header-button {
   max-width: 1340px;
 }
 
+.banner-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
 .banner-title {
   font-size: 86px;
   line-height: 1.2;
@@ -143,10 +149,9 @@ a.header-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 32px;
-  width: 175px;
-  height: 40px;
-  padding: 0;
+  padding: 12px;
+  font-size: 16px;
+  line-height: 16px;
   background: #2c2c2c;
   color: #fff;
   border-radius: 6px;
@@ -156,6 +161,16 @@ a.header-button {
 
 .banner-button:hover {
   background: #3a3a3a;
+}
+
+.banner-button--secondary {
+  background: #E3E3E3;
+  color: #1E1E1E;
+  border: 1px solid #767676;
+}
+
+.banner-button--secondary:hover {
+  background: #d8d8d8;
 }
 
 .modal-overlay {
@@ -202,6 +217,39 @@ a.header-button {
   padding: 20px;
 }
 
+.dropzone {
+  position: relative;
+  width: 100%;
+  min-height: 160px;
+  border: 1px dashed #8a8a8a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  background-color: #f7f7f7;
+  color: #1e1e1e;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.dropzone:hover {
+  background-color: #eeeeee;
+  border-color: #5a5a5a;
+}
+
+.dropzone span {
+  pointer-events: none;
+}
+
+.dropzone-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .form-label {
   display: block;
   margin-bottom: 6px;
@@ -239,7 +287,7 @@ a.header-button {
 }
 
 .modal-actions {
-  margin-top: 8px;
+  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
 }

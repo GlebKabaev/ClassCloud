@@ -1,18 +1,70 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-const isAuthOpen = ref(false)
+const isTrainingOpen = ref(false)
+const isClassifyOpen = ref(false)
 
-function openAuth() {
-  isAuthOpen.value = true
+const dropzoneTrainingPlaceholder = 'Перетащите файл для обучения'
+const dropzoneClassifyPlaceholder = 'Перетащите файл для классификации'
+
+const dropzoneTrainingText = ref(dropzoneTrainingPlaceholder)
+const dropzoneClassifyText = ref(dropzoneClassifyPlaceholder)
+
+const trainingFileInputRef = ref(null)
+const classifyFileInputRef = ref(null)
+
+function openTraining() {
+  isTrainingOpen.value = true
 }
 
-function closeAuth() {
-  isAuthOpen.value = false
+function openClassify() {
+  isClassifyOpen.value = true
+}
+
+function resetDropzone(type) {
+  if (type === 'training') {
+    dropzoneTrainingText.value = dropzoneTrainingPlaceholder
+    if (trainingFileInputRef.value) trainingFileInputRef.value.value = ''
+  } else if (type === 'classify') {
+    dropzoneClassifyText.value = dropzoneClassifyPlaceholder
+    if (classifyFileInputRef.value) classifyFileInputRef.value.value = ''
+  }
+}
+
+function closeTraining() {
+  isTrainingOpen.value = false
+  resetDropzone('training')
+}
+
+function closeClassify() {
+  isClassifyOpen.value = false
+  resetDropzone('classify')
+}
+
+function handleFiles(files, type) {
+  if (files && files.length) {
+    const name = files[0].name
+    if (type === 'training') {
+      dropzoneTrainingText.value = name
+    } else if (type === 'classify') {
+      dropzoneClassifyText.value = name
+    }
+  }
+}
+
+function onDrop(event, type) {
+  handleFiles(event.dataTransfer?.files, type)
+}
+
+function onFileChange(event, type) {
+  handleFiles(event.target.files, type)
 }
 
 function onKeydown(e) {
-  if (e.key === 'Escape') closeAuth()
+  if (e.key === 'Escape') {
+    if (isTrainingOpen.value) closeTraining()
+    if (isClassifyOpen.value) closeClassify()
+  }
 }
 
 onMounted(() => {
@@ -34,7 +86,7 @@ onBeforeUnmount(() => {
               <img src="@/assets/logo.png" alt="Logo" class="logo-img" />
             </a>
           </div>
-          <a href="#" class="header-button" @click.prevent="openAuth">Войти как администратор</a>
+          <!-- <a href="#" class="header-button" @click.prevent="openTraining">Войти как администратор</a> -->
         </div>
       </div>
     </header>
@@ -46,7 +98,10 @@ onBeforeUnmount(() => {
           <div class="banner-content">
             <h1 class="banner-title">Классификация точек</h1>
             <p class="banner-subtitle">Метод вокселей</p>
-            <a href="#" class="banner-button">Классифицировать</a>
+            <div class="banner-buttons">
+              <a href="#" class="banner-button banner-button--secondary" @click.prevent="openTraining">Обучить</a>
+              <a href="#" class="banner-button" @click.prevent="openClassify">Классифицировать</a>
+            </div>
           </div>
         </div>
       </div>
@@ -77,29 +132,65 @@ onBeforeUnmount(() => {
       </div>
     </footer>
 
-    <!-- Auth Popup -->
-    <div v-if="isAuthOpen" class="modal-overlay" @click.self="closeAuth">
+    <!-- Training Popup -->
+    <div v-if="isTrainingOpen" class="modal-overlay" @click.self="closeTraining">
       <div class="modal">
         <div class="modal-header">
-          <div class="modal-title">Авторизация</div>
-          <button class="modal-close" @click="closeAuth" aria-label="Закрыть">×</button>
+          <div class="modal-title">Обучение</div>
+          <button class="modal-close" @click="closeTraining" aria-label="Закрыть">×</button>
         </div>
         <div class="modal-body">
-          <form @submit.prevent>
-            <label class="form-label" for="login">Логин</label>
-            <input id="login" type="text" class="form-input" placeholder="Введите логин" autocomplete="username" />
-
-            <label class="form-label" for="password">Пароль</label>
-            <input id="password" type="password" class="form-input" placeholder="Введите пароль" autocomplete="current-password" />
-
-            <div class="modal-actions">
-              <button type="submit" class="popup-button">Войти</button>
-            </div>
-          </form>
+          <label
+            class="dropzone"
+            @dragover.prevent
+            @dragenter.prevent
+            @drop.prevent="onDrop($event, 'training')"
+          >
+            <span>{{ dropzoneTrainingText }}</span>
+            <input
+              ref="trainingFileInputRef"
+              type="file"
+              class="dropzone-input"
+              @change="onFileChange($event, 'training')"
+            />
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="popup-button">Добавить</button>
+          </div>
         </div>
       </div>
     </div>
-    <!-- /Auth Popup -->
+    <!-- /Training Popup -->
+
+    <!-- Classify Popup -->
+    <div v-if="isClassifyOpen" class="modal-overlay" @click.self="closeClassify">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Классификация</div>
+          <button class="modal-close" @click="closeClassify" aria-label="Закрыть">×</button>
+        </div>
+        <div class="modal-body">
+          <label
+            class="dropzone"
+            @dragover.prevent
+            @dragenter.prevent
+            @drop.prevent="onDrop($event, 'classify')"
+          >
+            <span>{{ dropzoneClassifyText }}</span>
+            <input
+              ref="classifyFileInputRef"
+              type="file"
+              class="dropzone-input"
+              @change="onFileChange($event, 'classify')"
+            />
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="popup-button">Отправить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Classify Popup -->
   </div>
 </template>
 
