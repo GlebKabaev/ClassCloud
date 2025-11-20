@@ -269,6 +269,11 @@ a.header-button {
   font-weight: 500;
 }
 
+.popup-button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-input {
   display: block;
   width: 100%;
@@ -290,6 +295,19 @@ a.header-button {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.status-message {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.status-message--success {
+  color: #1f8b24;
+}
+
+.status-message--error {
+  color: #b00020;
 }
 
 a,

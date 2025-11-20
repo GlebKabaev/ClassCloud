@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
+
 const isTrainingOpen = ref(false)
 const isClassifyOpen = ref(false)
 
@@ -13,6 +15,12 @@ const dropzoneClassifyText = ref(dropzoneClassifyPlaceholder)
 const trainingFileInputRef = ref(null)
 const classifyFileInputRef = ref(null)
 
+const trainingFile = ref(null)
+const classifyFile = ref(null)
+
+const classifyStatus = ref({ type: '', message: '' })
+const isClassifyUploading = ref(false)
+
 function openTraining() {
   isTrainingOpen.value = true
 }
@@ -24,9 +32,11 @@ function openClassify() {
 function resetDropzone(type) {
   if (type === 'training') {
     dropzoneTrainingText.value = dropzoneTrainingPlaceholder
+    trainingFile.value = null
     if (trainingFileInputRef.value) trainingFileInputRef.value.value = ''
   } else if (type === 'classify') {
     dropzoneClassifyText.value = dropzoneClassifyPlaceholder
+    classifyFile.value = null
     if (classifyFileInputRef.value) classifyFileInputRef.value.value = ''
   }
 }
@@ -39,6 +49,7 @@ function closeTraining() {
 function closeClassify() {
   isClassifyOpen.value = false
   resetDropzone('classify')
+  classifyStatus.value = { type: '', message: '' }
 }
 
 function handleFiles(files, type) {
@@ -46,8 +57,11 @@ function handleFiles(files, type) {
     const name = files[0].name
     if (type === 'training') {
       dropzoneTrainingText.value = name
+      trainingFile.value = files[0]
     } else if (type === 'classify') {
       dropzoneClassifyText.value = name
+      classifyFile.value = files[0]
+      classifyStatus.value = { type: '', message: '' }
     }
   }
 }
@@ -64,6 +78,43 @@ function onKeydown(e) {
   if (e.key === 'Escape') {
     if (isTrainingOpen.value) closeTraining()
     if (isClassifyOpen.value) closeClassify()
+  }
+}
+
+async function submitClassify() {
+  if (!classifyFile.value) {
+    classifyStatus.value = { type: 'error', message: 'Выберите файл для отправки' }
+    return
+  }
+
+  const formData = new FormData()
+  formData.append('file', classifyFile.value)
+
+  isClassifyUploading.value = true
+  classifyStatus.value = { type: '', message: '' }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/classify/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    const responseData = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      const serverMessage = responseData?.message || 'Не удалось загрузить файл'
+      const serverDetails = responseData?.details
+      throw new Error(serverDetails ? `${serverMessage} (${serverDetails})` : serverMessage)
+    }
+
+    classifyStatus.value = { type: 'success', message: responseData?.message || 'Файл отправлен в бакет raw' }
+    dropzoneClassifyText.value = dropzoneClassifyPlaceholder
+    classifyFile.value = null
+    if (classifyFileInputRef.value) classifyFileInputRef.value.value = ''
+  } catch (error) {
+    classifyStatus.value = { type: 'error', message: error.message || 'Не удалось отправить файл' }
+  } finally {
+    isClassifyUploading.value = false
   }
 }
 
@@ -99,7 +150,7 @@ onBeforeUnmount(() => {
             <h1 class="banner-title">Классификация точек</h1>
             <p class="banner-subtitle">Метод вокселей</p>
             <div class="banner-buttons">
-              <a href="#" class="banner-button banner-button--secondary" @click.prevent="openTraining">Обучить</a>
+              <!--<a href="#" class="banner-button banner-button--secondary" @click.prevent="openTraining">Обучить</a> -->
               <a href="#" class="banner-button" @click.prevent="openClassify">Классифицировать</a>
             </div>
           </div>
@@ -184,8 +235,21 @@ onBeforeUnmount(() => {
               @change="onFileChange($event, 'classify')"
             />
           </label>
+          <p
+            v-if="classifyStatus.message"
+            :class="['status-message', `status-message--${classifyStatus.type}`]"
+          >
+            {{ classifyStatus.message }}
+          </p>
           <div class="modal-actions">
-            <button type="button" class="popup-button">Отправить</button>
+            <button
+              type="button"
+              class="popup-button"
+              :disabled="isClassifyUploading"
+              @click="submitClassify"
+            >
+              {{ isClassifyUploading ? 'Отправка...' : 'Отправить' }}
+            </button>
           </div>
         </div>
       </div>
