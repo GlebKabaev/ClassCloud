@@ -172,13 +172,16 @@ onBeforeUnmount(() => {
     <footer>
       <div class="wrapper footer-box">
         <div class="footer-block">
-          111
+          <p class="footer-title">Разработчики</p>
+          <br>
+          <p>Команда 11</p>
         </div>
         <div class="footer-block">
-          222
+          <p class="footer-title">Источники</p>
+          <br>
+          <a href="https://github.com/GlebKabaev/ClassCloud.git" target="_blank" rel="noopener">GitHub</a>
         </div>
         <div class="footer-block">
-          333
         </div>
       </div>
     </footer>
