@@ -20,6 +20,8 @@ const classifyFile = ref(null)
 
 const classifyStatus = ref({ type: '', message: '' })
 const isClassifyUploading = ref(false)
+const uploadedObjectName = ref(null)
+const isDownloading = ref(false)
 
 function openTraining() {
   isTrainingOpen.value = true
@@ -50,6 +52,7 @@ function closeClassify() {
   isClassifyOpen.value = false
   resetDropzone('classify')
   classifyStatus.value = { type: '', message: '' }
+  uploadedObjectName.value = null
 }
 
 function handleFiles(files, type) {
@@ -107,7 +110,8 @@ async function submitClassify() {
       throw new Error(serverDetails ? `${serverMessage} (${serverDetails})` : serverMessage)
     }
 
-    classifyStatus.value = { type: 'success', message: responseData?.message || 'Файл отправлен в бакет raw' }
+    classifyStatus.value = { type: 'success', message: responseData?.message || 'Файл отправлен' }
+    uploadedObjectName.value = responseData?.objectName || null
     dropzoneClassifyText.value = dropzoneClassifyPlaceholder
     classifyFile.value = null
     if (classifyFileInputRef.value) classifyFileInputRef.value.value = ''
@@ -121,6 +125,54 @@ async function submitClassify() {
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
 })
+
+async function downloadClassifiedFile() {
+  if (!uploadedObjectName.value) {
+    classifyStatus.value = { type: 'error', message: 'Не найден загруженный файл' }
+    return
+  }
+
+  isDownloading.value = true
+  classifyStatus.value = { type: '', message: '' }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/classify/status/${uploadedObjectName.value}`)
+
+    if (response.status === 202) {
+      // Файл еще обрабатывается
+      classifyStatus.value = { type: 'error', message: 'Файл еще обрабатывается, попробуйте позже' }
+      return
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null)
+      throw new Error(errorData?.message || 'Не удалось скачать файл')
+    }
+
+    // Скачиваем файл
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    
+    // Получаем имя файла из заголовка Content-Disposition или используем дефолтное
+    const contentDisposition = response.headers.get('Content-Disposition')
+    const filenameMatch = contentDisposition?.match(/filename="?(.+?)"?$/i)
+    const filename = filenameMatch ? filenameMatch[1] : `predicted_${uploadedObjectName.value}`
+    
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    classifyStatus.value = { type: 'success', message: 'Файл успешно скачан' }
+  } catch (error) {
+    classifyStatus.value = { type: 'error', message: error.message || 'Не удалось скачать файл' }
+  } finally {
+    isDownloading.value = false
+  }
+}
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
@@ -252,6 +304,15 @@ onBeforeUnmount(() => {
               @click="submitClassify"
             >
               {{ isClassifyUploading ? 'Отправка...' : 'Отправить' }}
+            </button>
+            <button
+              v-if="uploadedObjectName && classifyStatus.type === 'success'"
+              type="button"
+              class="popup-button popup-button--secondary"
+              :disabled="isDownloading"
+              @click="downloadClassifiedFile"
+            >
+              {{ isDownloading ? 'Скачивание...' : 'Скачать' }}
             </button>
           </div>
         </div>
