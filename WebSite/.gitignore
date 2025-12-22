@@ -1,5 +1,3 @@
-# Игнорировать все файлы и папки в py
 py/**
-# Но не игнорировать controller.py
 !py/controller.py
-
+!py/controller-copy.py

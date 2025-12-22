@@ -4,7 +4,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from minio import Minio
-from minio.error import S3Error  # Импорт для обработки ошибок MinIO
+from minio.error import S3Error
 import uvicorn
 
 # Настройки
@@ -30,7 +30,6 @@ try:
         secure=SECURE_CONNECTION,
         region="us-east-1"
     )
-    # Проверка соединения
     minio_client.list_buckets()
     print(f"Подключено к MinIO: {MINIO_ENDPOINT}")
 
@@ -47,20 +46,16 @@ loaded_model = None
 try:
     from joblib import load as joblib_load
     loaded_model = joblib_load(MODEL_PATH)
-    print(f"Модель загружена через joblib: {MODEL_PATH}")
+    print(f"Модель загружена: {MODEL_PATH}")
 except Exception:
     try:
         import pickle
         with open(MODEL_PATH, 'rb') as f:
             loaded_model = pickle.load(f)
-        print(f"Модель загружена через pickle: {MODEL_PATH}")
+        print(f"Модель загружена (pickle): {MODEL_PATH}")
     except Exception as e:
-        print(f"Не удалось загрузить модель: {e}")
-        raise SystemExit("Ошибка загрузки модели")
-
-# Проверка метода предсказания
-if not hasattr(loaded_model, "predict"):
-    raise SystemExit("Загруженный объект не имеет метода predict")
+        print(f"Ошибка загрузки модели: {e}")
+        raise SystemExit("Критическая ошибка: модель не найдена")
 
 class FileRequest(BaseModel):
     filename: str
@@ -74,6 +69,7 @@ def run_prediction(request: FileRequest):
     print(f"Обработка файла: {filename}")
 
     try:
+        # 1. Скачивание файла
         try:
             response = minio_client.get_object(BUCKET_RAW, filename)
             data = response.read()
@@ -81,53 +77,53 @@ def run_prediction(request: FileRequest):
             response.release_conn()
         except S3Error as e:
             if e.code == "NoSuchKey":
-                raise HTTPException(status_code=404, detail=f"Файл {filename} не найден в бакете {BUCKET_RAW}")
+                raise HTTPException(status_code=404, detail=f"Файл {filename} не найден")
             raise
 
-
+        # 2. Чтение (header=None, так как в файле только цифры)
         df = pd.read_csv(
             io.BytesIO(data), 
             sep=r"\s+", 
             names=["x", "y", "z"],
-            header=0  
+            header=None  
         )
 
         if df.empty:
             raise HTTPException(status_code=400, detail="Файл пустой")
 
+        # 3. Предсказание
         start = time.time()
         predictions = loaded_model.predict(df[["x", "y", "z"]])
         duration = time.time() - start
 
-        df['class'] = predictions
-        df = df[['class', 'x', 'y', 'z']]
+        # 4. Формирование порядка: class на первом месте
+        df.insert(0, 'class', predictions)
 
-        csv_bytes = df.to_csv(index=False).encode('utf-8')
-        csv_buffer = io.BytesIO(csv_bytes)
+        output_data = df.to_csv(sep=" ", header=False, index=False).encode('utf-8')
+        output_buffer = io.BytesIO(output_data)
 
         result_filename = f"predicted_{filename}"
+        
         minio_client.put_object(
             BUCKET_PREDICTED,
             result_filename,
-            csv_buffer,
-            length=len(csv_bytes),
-            content_type="application/csv"
+            output_buffer,
+            length=len(output_data),
+            content_type="text/plain"
         )
-
-        print(f"Результат сохранён: {result_filename}")
 
         return {
             "status": "success",
             "original_file": filename,
             "result_file": result_filename,
             "rows_processed": len(df),
-            "prediction_time_sec": round(duration, 3)
+            "prediction_time": round(duration, 3)
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Ошибка при обработке: {e}")
+        print(f"Ошибка: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
