@@ -17,7 +17,9 @@
     "express": "^4.19.2",
     "minio": "^8.0.6",
     "multer": "^1.4.5-lts.1",
-    "vue": "^3.5.22"
+    "vue": "^3.5.22",
+    "vue-carousel": "^0.18.0",
+    "vue3-carousel": "^0.17.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

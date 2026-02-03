@@ -1,6 +1,37 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
+    import 'vue3-carousel/carousel.css'
+    import { Carousel, Slide, Navigation } from 'vue3-carousel'
+
+    const currentSlide = ref(0)
+
+    const slideTo = (nextSlide) => (currentSlide.value = nextSlide)
+
+    const galleryConfig = {
+        itemsToShow: 1,
+        wrapAround: true,
+        slideEffect: 'fade',
+        mouseDrag: false,
+        touchDrag: false,
+        height: 600,
+    }
+
+    const thumbnailsConfig = {
+        height: 80,
+        itemsToShow: 3,
+        wrapAround: true,
+        touchDrag: false,
+        gap: 3,
+    }
+
+    const images2 = ['/src/assets/caruselImages/1.png', '/src/assets/caruselImages/2.png', '/src/assets/caruselImages/3.png'];
+
+    const images = Array.from({ length: 3 }, (_, index) => ({
+        id: index + 1,
+        url: images2[index],
+    }))
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 const isTrainingOpen = ref(false)
@@ -139,7 +170,6 @@ async function downloadClassifiedFile() {
     const response = await fetch(`${API_BASE_URL}/api/classify/status/${uploadedObjectName.value}`)
 
     if (response.status === 202) {
-      // Файл еще обрабатывается
       classifyStatus.value = { type: 'error', message: 'Файл еще обрабатывается, попробуйте позже' }
       return
     }
@@ -149,13 +179,11 @@ async function downloadClassifiedFile() {
       throw new Error(errorData?.message || 'Не удалось скачать файл')
     }
 
-    // Скачиваем файл
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     
-    // Получаем имя файла из заголовка Content-Disposition или используем дефолтное
     const contentDisposition = response.headers.get('Content-Disposition')
     const filenameMatch = contentDisposition?.match(/filename="?(.+?)"?$/i)
     const filename = filenameMatch ? filenameMatch[1] : `predicted_${uploadedObjectName.value}`
@@ -213,10 +241,58 @@ onBeforeUnmount(() => {
 
     <main class="main-content">
       <div class="wrapper">
-        <div class="main-block">
-          <p>
-            Какой-то текст для тела нашего проекта
+        <section class="intro-section">
+          <p class="intro-text">
+            Сервис позволяет классифицировать облака точек с помощью метода вокселей:
+            загрузите файл, дождитесь обработки и скачайте результат с присвоенными метками классов.
           </p>
+        </section>
+
+        <section class="steps-section">
+          <h2 class="section-title">Как это работает</h2>
+          <div class="steps-grid">
+            <div class="step-card">
+              <span class="step-num">1</span>
+              <h3 class="step-title">Загрузите файл</h3>
+              <p class="step-desc">Перетащите облако точек в окно классификации или выберите файл на компьютере.</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">2</span>
+              <h3 class="step-title">Обработка</h3>
+              <p class="step-desc">Система анализирует данные методом вокселей и присваивает метки классов.</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">3</span>
+              <h3 class="step-title">Скачайте результат</h3>
+              <p class="step-desc">После завершения обработки скачайте файл с результатами классификации.</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="main-block">
+              <h2 class="banner-subSubtitle">Результат работы</h2>
+              <p class="gallery-caption">Примеры визуализации классифицированных облаков точек.</p>
+              <Carousel id="gallery" v-bind="galleryConfig" v-model="currentSlide">
+                  <Slide v-for="image in images" :key="image.id">
+                      <img :src="image.url" alt="Gallery Image" class="gallery-image" />
+                  </Slide>
+              </Carousel>
+
+              <Carousel id="thumbnails" v-bind="thumbnailsConfig" v-model="currentSlide">
+                  <Slide v-for="image in images" :key="image.id">
+                      <template #default="{ currentIndex, isActive }">
+                          <div :class="['thumbnail', { 'is-active': isActive }]"
+                               @click="slideTo(currentIndex)">
+                              <img :src="image.url" alt="Thumbnail Image" class="thumbnail-image" />
+                          </div>
+                      </template>
+                  </Slide>
+
+                  <template #addons>
+                      <Navigation />
+                  </template>
+              </Carousel>
+
         </div>
       </div>
     </main>
@@ -225,12 +301,10 @@ onBeforeUnmount(() => {
       <div class="wrapper footer-box">
         <div class="footer-block">
           <p class="footer-title">Разработчики</p>
-          <br>
           <p>Команда 11</p>
         </div>
         <div class="footer-block">
           <p class="footer-title">Источники</p>
-          <br>
           <a href="https://github.com/GlebKabaev/ClassCloud.git" target="_blank" rel="noopener">GitHub</a>
         </div>
         <div class="footer-block">

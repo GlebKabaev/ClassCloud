@@ -15,7 +15,7 @@ MINIO_ACCESS_KEY = "minioadmin"
 MINIO_SECRET_KEY = "minioadmin"
 SECURE_CONNECTION = False
 
-MODEL_PATH_RF = "random_fotest_trained_third.joblib"
+MODEL_PATH_RF = "random_fotest_trained_third.pkl"
 MODEL_PATH_CB = "cpu_catboost_model.cbm"
 
 BUCKET_RAW = "raw"
